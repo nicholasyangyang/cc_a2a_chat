@@ -17,6 +17,7 @@ export interface InboundMessage {
   from_name: string | null;
   content: string;
   received_at: string;
+  event_id?: string;
 }
 
 export interface RelayStatus {
