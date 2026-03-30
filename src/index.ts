@@ -46,7 +46,7 @@ await nostr.connect()
 // --- MCP Server ---
 const server = new Server(
   { name: 'cc_a2a_chat', version: '1.0.0' },
-  { capabilities: { tools: {} } }
+  { capabilities: { tools: {}, experimental: { 'claude/channel': {} } } }
 )
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -147,3 +147,28 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 
 const transport = new StdioServerTransport()
 await server.connect(transport)
+
+// Push inbound messages to the Claude Code window as channel notifications
+setInterval(async () => {
+  if (messageQueue.length === 0) return
+  const msgs = messageQueue.splice(0)
+  for (const msg of msgs) {
+    try {
+      await server.notification({
+        method: 'notifications/claude/channel',
+        params: {
+          content: `[${msg.from_name ?? msg.from_npub}]: ${msg.content}`,
+          meta: {
+            from_npub: msg.from_npub,
+            from_name: msg.from_name,
+            received_at: msg.received_at,
+          },
+        },
+      })
+    } catch {
+      // put back on queue if push failed
+      messageQueue.unshift(msg)
+      break
+    }
+  }
+}, 500)

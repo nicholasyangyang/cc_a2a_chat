@@ -20,6 +20,8 @@ export class NostrClient {
   private relays: Map<string, { relay: Relay | null; connected: boolean }>
   private contacts: Contact[]
   private onMessage: (msg: InboundMessage) => void
+  private seenEventIds = new Set<string>()
+  private readonly startupTime: number = Math.floor(Date.now() / 1000)
 
   constructor(opts: NostrClientOptions) {
     this.privkey = decodeNsec(opts.nsec)
@@ -38,16 +40,21 @@ export class NostrClient {
     try {
       const relay = await Relay.connect(url)
       this.relays.set(url, { relay, connected: true })
-      relay.subscribe([{ kinds: [1059], '#p': [this.pubkeyHex] }], {
+      relay.subscribe([{ kinds: [1059], '#p': [this.pubkeyHex], since: this.startupTime }], {
         onevent: (event: any) => this.handleEvent(event),
       })
-      relay.onclose = () => this.relays.set(url, { relay: null, connected: false })
+      relay.onclose = () => {
+        this.relays.set(url, { relay: null, connected: false })
+        setTimeout(() => this.connectRelay(url), 5000)
+      }
     } catch {
       this.relays.set(url, { relay: null, connected: false })
     }
   }
 
   private handleEvent(event: any): void {
+    if (this.seenEventIds.has(event.id)) return
+    this.seenEventIds.add(event.id)
     try {
       const { senderNpub, content } = this.unwrapGiftWrap(event)
       if (!isAllowed(this.contacts, senderNpub)) return
