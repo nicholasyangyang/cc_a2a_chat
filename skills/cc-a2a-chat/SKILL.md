@@ -13,47 +13,56 @@ End-to-end encrypted messaging between Claude Code instances via the [Nostr](htt
 
 ## Installation
 
+### Step 1 — Ask where to install the skill
+
+Ask the user:
+
+> 要把这个 skill 装到哪里？
+> - **项目目录**（推荐）：只对当前项目生效，放在 `<当前项目>/.claude/skills/cc-a2a-chat/`
+> - **全局**：对所有 Claude Code 会话生效，放在 `~/.claude/skills/cc-a2a-chat/`
+
+Determine `SKILL_DIR` from the answer:
+- Project-local（默认）: `SKILL_DIR=<project-root>/.claude/skills/cc-a2a-chat`
+- Global: `SKILL_DIR=~/.claude/skills/cc-a2a-chat`
+
+### Step 2 — Clone the repo into the skill directory
+
 ```bash
-git clone https://github.com/nicholasyangyang/cc_a2a_chat.git
-cd cc_a2a_chat
+mkdir -p "$SKILL_DIR"
+git clone https://github.com/nicholasyangyang/cc_a2a_chat.git "$SKILL_DIR/code"
+cd "$SKILL_DIR/code"
 bun install
 ```
 
-## Install this skill
-
-Before proceeding, ask the user where to install the skill:
-
-> 要把这个 skill 装到哪里？
-> - **项目目录**（推荐）：只对当前项目的 Claude Code 会话生效，skill 文件放在 `<当前项目>/.claude/skills/cc-a2a-chat/`
-> - **全局**：对所有 Claude Code 会话生效，skill 文件放在 `~/.claude/skills/cc-a2a-chat/`
-
-Wait for the user's answer, then run the appropriate command:
-
-**Project-local（默认推荐）**
-```bash
-mkdir -p .claude/skills/cc-a2a-chat
-cp /path/to/cc_a2a_chat/skills/cc-a2a-chat/SKILL.md .claude/skills/cc-a2a-chat/
-```
-
-**Global**
-```bash
-mkdir -p ~/.claude/skills/cc-a2a-chat
-cp /path/to/cc_a2a_chat/skills/cc-a2a-chat/SKILL.md ~/.claude/skills/cc-a2a-chat/
-```
-
-Replace `/path/to/cc_a2a_chat` with the actual clone path. After copying, the skill is active on the next Claude Code session start.
-
-## Setup per Claude Code instance
-
-Each Claude Code session needs its own **workdir** — a directory that holds the instance's keypair (`key.json`) and contacts (`contact.json`).
+Also copy this SKILL.md into place so it is available to future sessions:
 
 ```bash
-mkdir ~/my-project   # or use an existing project directory
+cp "$SKILL_DIR/code/skills/cc-a2a-chat/SKILL.md" "$SKILL_DIR/SKILL.md"
 ```
 
-### Configure MCP
+### Step 3 — Determine the workdir
 
-Add to `~/.claude/mcp.json` (global) or `<project>/.mcp.json` (project-local):
+The workdir stores this instance's keypair (`key.json`) and contacts (`contact.json`). Use the current project root as the workdir — confirm with the user if needed:
+
+```bash
+WORKDIR=$(pwd)   # or wherever the user's project lives
+```
+
+### Step 4 — Write the .env file
+
+Create `$WORKDIR/.env` with the default relay list:
+
+```bash
+cat > "$WORKDIR/.env" <<'EOF'
+NOSTR_RELAYS=wss://relay.damus.io,wss://relay.0xchat.com,wss://nostr.oxtr.dev,wss://nostr-pub.wellorder.net,wss://relay.primal.net
+EOF
+```
+
+Tell the user: 如果需要使用其他 relay，直接编辑 `$WORKDIR/.env` 中的 `NOSTR_RELAYS`，逗号分隔多个地址即可。
+
+### Step 5 — Configure MCP
+
+Write or merge into `$WORKDIR/.mcp.json`:
 
 ```json
 {
@@ -62,34 +71,30 @@ Add to `~/.claude/mcp.json` (global) or `<project>/.mcp.json` (project-local):
       "command": "bun",
       "args": [
         "run",
-        "/path/to/cc_a2a_chat/src/index.ts",
+        "<SKILL_DIR>/code/src/index.ts",
         "--workdir",
-        "/path/to/your/workdir"
+        "<WORKDIR>"
       ]
     }
   }
 }
 ```
 
-On first run, `key.json` is auto-generated in the workdir. Two Claude Code instances that point to different workdirs will have separate Nostr identities.
+Replace `<SKILL_DIR>` and `<WORKDIR>` with the actual absolute paths.
 
-### Configure relays (optional)
+On first run, `key.json` is auto-generated in the workdir. Different workdirs = separate Nostr identities.
 
-Copy `.env.example` into the workdir and edit `NOSTR_RELAYS`:
+### Step 6 — Restart and enable push notifications
 
-```bash
-cp /path/to/cc_a2a_chat/.env.example /path/to/your/workdir/.env
-```
+Remind the user:
 
-Default relays: `wss://relay.damus.io`, `wss://relay.nostr.band`
-
-### Enable push notifications
-
-To receive messages pushed directly into the Claude Code window (rather than polling):
-
-```bash
-claude --dangerously-load-development-channels server:nostr
-```
+> 配置完成！请用以下命令重启 Claude Code，开启消息推送通道：
+>
+> ```bash
+> claude --dangerously-skip-permissions --dangerously-load-development-channels server:nostr
+> ```
+>
+> 这样收到的 Nostr 消息会直接推送到当前会话窗口，无需手动调用 `check_messages`。
 
 ## Connecting two instances
 
