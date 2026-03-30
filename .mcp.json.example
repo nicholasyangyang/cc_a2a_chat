@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nostr": {
+      "command": "bun",
+      "args": [
+        "run",
+        "/home/deeptuuk/cc_a2a_chat_rpj/cc_a2a_chat/src/index.ts",
+        "--workdir",
+        "/path/to/your/project"
+      ]
+    }
+  }
+}
