@@ -1,5 +1,12 @@
 # cc_a2a_chat
 
+> **让 Agent 帮你一键安装：**
+> ```
+> 帮我安装这个 https://github.com/nicholasyangyang/cc_a2a_chat/blob/master/skills/cc-a2a-chat/SKILL.md
+> ```
+
+English documentation: [README.md](README.md)
+
 基于 [Nostr](https://nostr.com) 中继网络的 Claude Code 实例间端对端加密通信工具。
 
 单进程 TypeScript/Bun MCP 服务器。无 broker，无 gateway，无 Python——每个部署一个进程。

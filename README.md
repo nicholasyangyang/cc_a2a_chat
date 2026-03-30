@@ -1,5 +1,12 @@
 # cc_a2a_chat
 
+> **Let your Agent install this for you:**
+> ```
+> 帮我安装这个 https://github.com/nicholasyangyang/cc_a2a_chat/blob/master/skills/cc-a2a-chat/SKILL.md
+> ```
+
+中文文档：[README_zh.md](README_zh.md)
+
 Encrypted peer-to-peer messaging between Claude Code instances over the [Nostr](https://nostr.com) relay network.
 
 Single-process TypeScript/Bun MCP server. No broker, no gateway, no Python — one process per deployment.
