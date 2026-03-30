@@ -58,19 +58,18 @@ export class NostrClient {
         content,
         received_at: new Date().toISOString(),
       })
-    } catch {
-      // malformed or undecryptable event — drop silently
+    } catch (e) {
+      process.stderr.write(`[cc_a2a_chat] handleEvent dropped event: ${e}\n`)
     }
   }
 
-  async send(toNpub: string, content: string): Promise<void> {
+  async send(toNpub: string, content: string): Promise<{ ok: boolean; sent: number; total: number }> {
     const toPubkeyHex = decodeNpub(toNpub)
     const giftWrap = this.createGiftWrap(toPubkeyHex, content)
-    await Promise.allSettled(
-      [...this.relays.values()]
-        .filter(r => r.connected && r.relay)
-        .map(r => r.relay!.publish(giftWrap))
-    )
+    const connected = [...this.relays.values()].filter(r => r.connected && r.relay)
+    const results = await Promise.allSettled(connected.map(r => r.relay!.publish(giftWrap)))
+    const sent = results.filter(r => r.status === 'fulfilled').length
+    return { ok: sent > 0, sent, total: connected.length }
   }
 
   updateContacts(contacts: Contact[]): void {

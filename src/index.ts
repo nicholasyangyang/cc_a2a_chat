@@ -103,9 +103,15 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const text = (s: unknown) => ({ content: [{ type: 'text' as const, text: String(s) }] })
 
   switch (name) {
-    case 'send_message':
-      await nostr.send(args.to_npub as string, args.content as string)
-      return text('Message sent.')
+    case 'send_message': {
+      if (!args.to_npub || typeof args.to_npub !== 'string') return text('Error: to_npub is required.')
+      if (!args.content || typeof args.content !== 'string') return text('Error: content is required.')
+      const result = await nostr.send(args.to_npub, args.content)
+      if (!result.ok) {
+        return text(`Failed to send: no relays available (${result.total} configured, 0 accepted).`)
+      }
+      return text(`Message sent (${result.sent}/${result.total} relays).`)
+    }
 
     case 'check_messages': {
       const msgs = messageQueue.splice(0)
@@ -113,7 +119,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     }
 
     case 'add_contact':
-      contacts = addContact(workdir, args.npub as string, args.name as string)
+      if (!args.npub || typeof args.npub !== 'string') return text('Error: npub is required.')
+      if (!args.name || typeof args.name !== 'string') return text('Error: name is required.')
+      contacts = addContact(workdir, args.npub, args.name)
       nostr.updateContacts(contacts)
       return text(`Contact "${args.name}" added.`)
 
