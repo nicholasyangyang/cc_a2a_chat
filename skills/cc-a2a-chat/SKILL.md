@@ -19,6 +19,30 @@ cd cc_a2a_chat
 bun install
 ```
 
+## Install this skill
+
+Before proceeding, ask the user where to install the skill:
+
+> 要把这个 skill 装到哪里？
+> - **项目目录**（推荐）：只对当前项目的 Claude Code 会话生效，skill 文件放在 `<当前项目>/.claude/skills/cc-a2a-chat/`
+> - **全局**：对所有 Claude Code 会话生效，skill 文件放在 `~/.claude/skills/cc-a2a-chat/`
+
+Wait for the user's answer, then run the appropriate command:
+
+**Project-local（默认推荐）**
+```bash
+mkdir -p .claude/skills/cc-a2a-chat
+cp /path/to/cc_a2a_chat/skills/cc-a2a-chat/SKILL.md .claude/skills/cc-a2a-chat/
+```
+
+**Global**
+```bash
+mkdir -p ~/.claude/skills/cc-a2a-chat
+cp /path/to/cc_a2a_chat/skills/cc-a2a-chat/SKILL.md ~/.claude/skills/cc-a2a-chat/
+```
+
+Replace `/path/to/cc_a2a_chat` with the actual clone path. After copying, the skill is active on the next Claude Code session start.
+
 ## Setup per Claude Code instance
 
 Each Claude Code session needs its own **workdir** — a directory that holds the instance's keypair (`key.json`) and contacts (`contact.json`).
