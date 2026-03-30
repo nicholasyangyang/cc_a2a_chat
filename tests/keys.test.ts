@@ -1,5 +1,5 @@
 import { test, expect, beforeEach, afterEach } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { mkdtempSync, rmSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { loadOrGenerateKey, decodeNsec, decodeNpub } from '../src/keys.ts'
@@ -22,7 +22,6 @@ test('generates key.json when missing', () => {
 
 test('persists generated key to disk', () => {
   loadOrGenerateKey(tmpDir)
-  const { existsSync } = require('fs')
   expect(existsSync(join(tmpDir, 'key.json'))).toBe(true)
 })
 
@@ -48,4 +47,8 @@ test('decodeNpub returns 64-char hex string', () => {
 
 test('decodeNsec throws on invalid input', () => {
   expect(() => decodeNsec('invalid')).toThrow()
+})
+
+test('decodeNpub throws on invalid input', () => {
+  expect(() => decodeNpub('invalid')).toThrow()
 })

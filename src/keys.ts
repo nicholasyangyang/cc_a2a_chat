@@ -1,5 +1,4 @@
-import { generateSecretKey, getPublicKey } from 'nostr-tools'
-import { nip19 } from 'nostr-tools'
+import { generateSecretKey, getPublicKey, nip19 } from 'nostr-tools'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import type { KeyPair } from './types.ts'
@@ -7,7 +6,11 @@ import type { KeyPair } from './types.ts'
 export function loadOrGenerateKey(workdir: string): KeyPair {
   const keyPath = join(workdir, 'key.json')
   if (existsSync(keyPath)) {
-    return JSON.parse(readFileSync(keyPath, 'utf-8')) as KeyPair
+    try {
+      return JSON.parse(readFileSync(keyPath, 'utf-8')) as KeyPair
+    } catch {
+      throw new Error(`key.json exists at ${keyPath} but cannot be parsed — delete it to generate a new key`)
+    }
   }
   const privkey = generateSecretKey()
   const pubkeyHex = getPublicKey(privkey)
